@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-http-bridge
+  namespace: kafka-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-http-bridge
+  template:
+    metadata:
+      labels:
+        app: kafka-http-bridge
+    spec:
+      containers:
+      - name: kafka-http-bridge
+        image: imeshrajdeep/kafka-repo:kafka-go-app-v9
+        imagePullPolicy: Always
+        args:
+        - -mode=bridge
+        - -http-listen=:8082
+        - -brokers=kafka.kafka-demo.svc.cluster.local:9092
+        - -schema-url=http://schema-registry.kafka-demo.svc.cluster.local:8081
+        - -bridge-avro=true
+        - -bridge-auto-register=true
+        - -bridge-require-schema=false
+        - -subject-template=%s-value
+        ports:
+        - name: http
+          containerPort: 8082
+        env:
+        - name: KAFKA_KEY_HEADER
+          value: x-kafka-key
+        - name: MAX_BODY_BYTES
+          value: "1048576"
+        - name: DELIVERY_TIMEOUT_MS
+          value: "15000"
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8082
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8082
+          initialDelaySeconds: 10
+          periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-http-bridge
+  namespace: kafka-demo
+spec:
+  selector:
+    app: kafka-http-bridge
+  ports:
+  - name: http
+    port: 8082
+    targetPort: 8082

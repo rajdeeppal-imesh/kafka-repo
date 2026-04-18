@@ -1,0 +1,33 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: kafka-http-produce-bridge
+  namespace: default
+spec:
+  parentRefs:
+  - name: eg
+    sectionName: http
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: kafka-http-bridge
+      namespace: kafka-demo
+      port: 8082
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: allow-default-http-to-kafka-http-bridge
+  namespace: kafka-demo
+spec:
+  from:
+  - group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    namespace: default
+  to:
+  - group: ""
+    kind: Service
+    name: kafka-http-bridge

@@ -1,0 +1,10 @@
+{
+  "type": "record",
+  "name": "UserEvent",
+  "namespace": "demo",
+  "fields": [
+    {"name": "name", "type": "string"},
+    {"name": "email", "type": "string"},
+    {"name": "created_at", "type": "long"}
+  ]
+}
